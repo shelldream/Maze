@@ -1,0 +1,5 @@
+# feature schema file, 按照“\t”分割
+# format: index	feature_name	feature_dtype
+# e.g: 0	age	int
+
+
