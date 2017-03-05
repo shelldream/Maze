@@ -8,9 +8,48 @@ import sys
 reload(sys).setdefaultencoding('utf-8')
 import os
 
+import numpy as np
 import pandas as pd
+from sklearn.datasets import load_svmlight_file
 
-def load_txt_file(fmap_filename="fmap.schema", file_list):
+
+def load_libsvm_txt_file(isDense=True, file_list=None):
+    """
+        载入libsvm格式的纯文本数据文件
+        Args:
+            file_list: list, 数据文件列表
+            isDense: bool, 数据是否为稠密矩阵表示
+        Rets:
+            x_data: numpy.array
+            y_data: numpy.array
+    """
+    if file_list is None:
+        raise ValueError("file_list is empty")
+    
+    x_data = None
+    y_data = None
+    for filename in file_list:
+        try:
+           x_tmp, y_tmp = load_svmlight_file(filename)
+        except:
+            print "Fail to load %s in libsvm format"%filename
+        x_tmp = np.array(x_tmp)
+        y_tmp = np.array(y_tmp)
+
+        if not isDense:
+            x_tmp.todense()
+        if x_data is None:
+            x_data = x_tmp
+            y_data = y_tmp
+        else:
+            x_data = np.row_stack((x_data, x_tmp))
+            y_data = np.row_stack((y_data, y_tmp))
+    
+    return y_data, x_data 
+                
+
+
+def load_txt_file(file_list, fmap_filename="fmap.schema"):
     """
         载入文本数据
         
@@ -48,7 +87,7 @@ def load_txt_file(fmap_filename="fmap.schema", file_list):
     return data
 
 
-def filter_feature(filter_feature_list=None, data):
+def filter_feature(data, filter_feature_list=None):
     """
         Args:
             filter_feature_list: list,
