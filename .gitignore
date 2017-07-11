@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+test*
+test_*
+*.dat
+*.schema

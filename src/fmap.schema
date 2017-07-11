@@ -2,4 +2,6 @@
 # format: index	feature_name	feature_dtype
 # e.g: 0	age	int
 
-
+0	name	str
+1	gender	str
+2	age	int
