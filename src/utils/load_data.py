@@ -13,7 +13,7 @@ import pandas as pd
 from sklearn.datasets import load_svmlight_file
 
 
-def load_libsvm_file(filename):
+def load_libsvm_file(filename, isDense=False):
     """
         载入svmlight/libsvm格式的纯文本数据文件
         稀疏表示的数据将被输出为稠密的numpy数组
@@ -29,7 +29,8 @@ def load_libsvm_file(filename):
     
     try:
         x_data, y_data = load_svmlight_file(filename)
-        x_data = x_data.todense()
+        if isDense:
+            x_data = x_data.todense()
         x_data = np.array(x_data)
         y_data = np.array(y_data)
     except:
@@ -73,9 +74,8 @@ def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t"):
         Rets:
             data: pandas dataframe 格式, 从多个数据文件中读取数据合并后的结果
     """
-
     if not os.path.isfile(fmap_filename):
-        raise ValueError("%s does not exist!"%fmap_filename)
+        raise ValueError("schema file %s does not exist!"%fmap_filename)
     
     dtype_map = {
         "int": np.int32,

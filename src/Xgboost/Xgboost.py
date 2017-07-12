@@ -8,13 +8,16 @@
 """
 import sys
 reload(sys).setdefaultencoding('utf-8')
+sys.path.append("./utils")
+sys.path.append("../utils")
 
 import datetime
 import xgboost as xgb
 import numpy as np
+from common import *
 
 class Xgboost:
-    def __init__(self, train_data=None, validation_data=None, test_data=None, params=None, boost_round=100, evals=None, 
+    def __init__(self, train_data=None, validation_data=None, test_data=None, params=None, boost_round=100, evals=(), 
             model_saveto="model"):
         """
             Args:
@@ -55,8 +58,10 @@ class XgbClassifier(Xgboost):
         if is_sklearn_api:
             pass
         else:
-            self.bst_classifier = xgb.train(self.param, self.train_data, 
+            self.bst_classifier = xgb.train(params=self.params, dtrain=self.train_data,\
                 num_boost_round=self.boost_round, evals=self.evals)
-            print self.bst_classifier.eval(self.test_data)
-            self.bst_classifier.save_model(self.model_saveto)
-
+            try:
+                self.bst_classifier.save_model(self.model_saveto)
+                print colors.GREEN + "%s has been saved successfully!!"%self.model_saveto + colors.ENDC
+            except:
+                print colors.RED + "Warning: %s has not been saved!! Please ensure that the output directory of your model exists. "%self.model_saveto + colors.ENDC

@@ -2,19 +2,18 @@
 """
     Description: 
         main.py
-        支持的原始的数据文本格式：
-            1. libsvm格式
-            2. CSV
     Author: shelldream
     Date: 2017-01-07
 """
 import sys
 reload(sys).setdefaultencoding('utf-8')
 import argparse
+
+import xgboost as xgb
+
 import Xgboost.Xgboost
-
-from utils import load_libsvm_txt_file
-
+import utils.load_data as ld
+from utils.common import *
 
 def main():
     parser = argparse.ArgumentParser(description="This is Maze platform!")
@@ -32,7 +31,7 @@ def main():
         help="Choost the task mode you want to use! The choices include train, predict, analysis")
 
     #data type
-    parser.add_argument("--data_type", choices=["libsvm", "csv_with_schema", "csv_without_schema"], dest="data_type", default="libsvm", help="Choose the data type you want to use.\
+    parser.add_argument("--data_type", choices=["libsvm", "csv_with_schema", "csv_with_table_header"], dest="data_type", default="libsvm", help="Choose the data type you want to use.\
         The choices include libsvm, csv_with_schema, csv_without_schema")
     parser.add_argument("--isDense", choices=[True, False], dest="isDense", default=True, help="Set the format of libsvm is dense or not.")
     
@@ -45,6 +44,8 @@ def main():
         validation data path. You can choose more than one file path.")
     parser.add_argument("--predict_data_path", action="append", dest="predict_data", default=None, help="Choose the \
         predict data path. You can choose more than one file path.")
+    parser.add_argument("--schema_file", default="fmap.schema", dest="fmap", help="Choose your feature schema file.You only need one file if you choose csv_with_schema data type.")
+
 
     #parameter
     parser.add_argument("--parameters", default="{}", dest="parameters", help="Choose the parameters for your model and \
@@ -69,30 +70,59 @@ def parse_args(parser):
     y_valid, x_valid = None, None
     
     if args.data_type == "libsvm":
-        y_train, x_train = load_libsvm_txt_file(args.isDense, args.train_data)
-        if args.test_data is not None:
-            y_test, x_test = load_libsvm_txt_file(args.isDense, args.test_data)
-        if args.validation_data is not None:
-            y_valid, x_valid = load_libsvm_txt_file(args.isDense, args.validation_data)
+        if args.train_data is not None and len(args.train_data) > 1:
+            y_train, x_train = ld.load_libsvm_file(args.train_data[0], args.isDense)
+        if args.test_data is not None and len(args.test_data) > 1:
+            y_test, x_test = ld.load_libsvm_file(args.test_data[0], args.isDense)
+        if args.validation_data is not None and len(args.validation_data) > 1:
+            y_valid, x_valid = ld.load_libsvm_file(args.validation_data[0], args.isDense)
     elif args.data_type == "csv_with_schema":
-        pass
-    elif args.data_type == "csv_without_schema":
+        if args.train_data is not None:
+            x_train = ld.load_csv_with_fmap(args.train_data, args.fmap)
+            try:
+                y_train = x_train['label'].values
+            except:
+                raise ValueError("Label info missing in the training data!!!")
+        if args.test_data is not None:
+            x_test = ld.load_csv_with_fmap(args.test_data, args.fmap)
+        if args.validation_data is not None:
+            x_valid = ld.load_csv_with_fmap(args.validation_data, args.fmap)
+    elif args.data_type == "csv_with_table_header":
         pass
     else:
         raise ValueError("Wrong data type parameter!")
     
     try:
         param_dict = eval(args.parameters)
+        print colors.YELLOW + "param_dict:", param_dict , colors.ENDC
     except:
         raise ValueError("Wrong parameters!!")
     
     if args.model == "xgboost":
         """ 如果使用Xgboost，保证训练数据
         """
-        if args.task == "classification":
-            Xgb = Xgboost.Xgboost.XgbClassifier(train_data=)
+        if x_train is not None:
+            if y_train is not None:
+                train_data = xgb.DMatrix(x_train, y_train)
+            else:
+                train_data = xgb.DMatrix(x_train)
 
-    
+        if x_test is not None:
+            if y_test is not None:
+                test_data = xgb.DMatrix(x_test, y_test)
+            else:
+                test_data = xgb.DMatrix(x_test)
+        
+        if x_valid is not None:
+            if y_valid is not None:
+                valid_data = xgb.DMatrix(x_valid, y_valid)
+            else:
+                valid_data = xgb.DMatrix(x_valid)
+        
+        if args.task == "classification":
+            Xgb = Xgboost.Xgboost.XgbClassifier(train_data=train_data, params=param_dict)
+            if args.mode == "train":
+                Xgb.train() 
 
 if __name__ == "__main__":
     main()
