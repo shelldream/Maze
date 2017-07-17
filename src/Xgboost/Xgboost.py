@@ -2,7 +2,6 @@
 """
     Description:
         利用Xgboost进行分类、回归、排序等机器学习任务
-        传入的数据格式保证是xgboost.DMatrix格式
     Author: shelldream
     Date: 2017-01-07
 """
@@ -10,58 +9,50 @@ import sys
 reload(sys).setdefaultencoding('utf-8')
 sys.path.append("./utils")
 sys.path.append("../utils")
+sys.path.append("./metrics")
+sys.path.append("../metrics")
+
 
 import datetime
 import xgboost as xgb
 import numpy as np
+import pickle
 from common import *
+import metrics.classify_metrics as classify_metrics
 
-class Xgboost:
-    def __init__(self, train_data=None, validation_data=None, test_data=None, params=None, boost_round=100, evals=(), 
-            model_saveto="model"):
+class Xgboost(object):
+    def __init__(self, params={}, model_saveto="model"):
         """
             Args:
-                train_data: DMatrix 格式, 训练数据 
-                validation_data: DMatrix 格式, 验证数据 
-                test_data: DMatrix 格式, 测试数据
-                params: dict, booster 训练参数 
-                boost_round: Number of boosting iterations
                 evals (list of pairs (DMatrix, string)) – List of items to be evaluated during training, \
                     this allows user to watch performance on the validation set. e.g: [(dtrain, "train"), (dtest, "eval")]
                 model_saveto: string, 训练完成的model保存目录
             Rets:
                 No returns
         """
-        if train_data is not None and type(train_data) != type(xgb.DMatrix([])):
-            raise ValueError("Please ensure that the format of the train data is xgboost.core.DMatrix ")
-        else:
-            self.train_data = train_data
-        
-        if validation_data is not None and type(validation_data) != type(xgb.DMatrix([])):
-            raise ValueError("Please ensure that the format of the validation data is xgboost.core.DMatrix ")
-        else:
-            self.validation_data = validation_data
-         
-        if test_data is not None and type(test_data) != type(xgb.DMatrix([])):
-            raise ValueError("Please ensure that the format of the test data is xgboost.core.DMatrix ")
-        else:
-            self.test_data = test_data
-        
         self.params = params
-        self.boost_round = boost_round
-        self.evals = evals
-        self.model_saveto = model_saveto + "/" + datetime.datetime.now().strftime("%Y%m%d-%H%M")
-
+        self.model_saveto = model_saveto + "/" + datetime.datetime.now().strftime("%Y%m%d-%H%M") + ".pickle.dat"
 
 class XgbClassifier(Xgboost):
-    def train(self, is_sklearn_api=False):
-        if is_sklearn_api:
-            pass
-        else:
-            self.bst_classifier = xgb.train(params=self.params, dtrain=self.train_data,\
-                num_boost_round=self.boost_round, evals=self.evals)
-            try:
-                self.bst_classifier.save_model(self.model_saveto)
-                print colors.GREEN + "%s has been saved successfully!!"%self.model_saveto + colors.ENDC
-            except:
-                print colors.RED + "Warning: %s has not been saved!! Please ensure that the output directory of your model exists. "%self.model_saveto + colors.ENDC
+    def __init__(self, params={}, model_saveto="model"):
+        super(XgbClassifier, self).__init__()
+        self.bst_classifier = xgb.XGBClassifier(**self.params)
+
+    def train(self, x_train, y_train):
+        """
+            Args:
+                x_train:
+                y_train:
+        """
+        model = self.bst_classifier.fit(x_train, y_train) 
+        y_pred = model.predict(x_train) 
+        accuracy_score = classify_metrics.cal_accuracy_score(y_train, y_pred) 
+        print colors.BLUE + "In the training set, classify accuracy score:%f"%accuracy_score + colors.ENDC
+        try:
+            pickle.dump(model, open(self.model_saveto, "wb"))
+            print colors.GREEN + "%s has been saved successfully!!"%self.model_saveto + colors.ENDC
+        except:
+            print colors.RED + "Warning: %s has not been saved!! Please ensure that the output directory of your model exists. "%self.model_saveto + colors.ENDC
+
+    def predict(self):
+        pass

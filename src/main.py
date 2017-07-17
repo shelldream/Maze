@@ -50,9 +50,29 @@ def main():
     #parameter
     parser.add_argument("--parameters", default="{}", dest="parameters", help="Choose the parameters for your model and \
         the format of your parameters is dict format!")
-    
+    parser.add_argument("--boost_round", default=100, dest="boost_round", help="Number of boosting iterations")
+     
     parse_args(parser)
 
+def split_data_label(data):
+    """
+        将原始含有label和特征的数据split成feature和label两部分
+        Args:
+            data: pandas dataframe格式
+        Rets:
+            x_data:
+            y_data:
+    """
+    try:
+        y_data = data['label'].values
+    except:
+        raise ValueError("Label info missing in the data!!!")
+    try:
+        data.pop("label")
+        x_data = data
+    except:
+        raise ValueError("Label info missing in the data!!!")
+    return y_data, x_data 
 
 def parse_args(parser):
     """
@@ -76,19 +96,17 @@ def parse_args(parser):
             y_test, x_test = ld.load_libsvm_file(args.test_data[0], args.isDense)
         if args.validation_data is not None and len(args.validation_data) > 1:
             y_valid, x_valid = ld.load_libsvm_file(args.validation_data[0], args.isDense)
-    elif args.data_type == "csv_with_schema":
+    elif args.data_type == "csv_with_schema" or args.data_type == "csv_with_table_header":# 读取的数据类型都是pandas类型
+        load_func = ld.load_csv_with_fmap if args.data_type == "csv_with_schema" else ld.load_csv_with_table_header
         if args.train_data is not None:
-            x_train = ld.load_csv_with_fmap(args.train_data, args.fmap)
-            try:
-                y_train = x_train['label'].values
-            except:
-                raise ValueError("Label info missing in the training data!!!")
+            train_data = load_func(args.train_data, args.fmap)
+            y_train, x_train = split_data_label(train_data)               
         if args.test_data is not None:
-            x_test = ld.load_csv_with_fmap(args.test_data, args.fmap)
+            test_data = load_func(args.test_data, args.fmap)
+            y_test, x_test = split_data_label(test_data)               
         if args.validation_data is not None:
-            x_valid = ld.load_csv_with_fmap(args.validation_data, args.fmap)
-    elif args.data_type == "csv_with_table_header":
-        pass
+            valid_data = load_func(args.validation_data, args.fmap)
+            y_valid, x_valid = split_data_label(valid_data)               
     else:
         raise ValueError("Wrong data type parameter!")
     
@@ -97,32 +115,22 @@ def parse_args(parser):
         print colors.YELLOW + "param_dict:", param_dict , colors.ENDC
     except:
         raise ValueError("Wrong parameters!!")
+
+    try:
+        boost_round = int(args.boost_round)
+    except:
+        raise ValueError("Wrong boost round number!!")
     
     if args.model == "xgboost":
-        """ 如果使用Xgboost，保证训练数据
-        """
-        if x_train is not None:
-            if y_train is not None:
-                train_data = xgb.DMatrix(x_train, y_train)
-            else:
-                train_data = xgb.DMatrix(x_train)
-
-        if x_test is not None:
-            if y_test is not None:
-                test_data = xgb.DMatrix(x_test, y_test)
-            else:
-                test_data = xgb.DMatrix(x_test)
-        
-        if x_valid is not None:
-            if y_valid is not None:
-                valid_data = xgb.DMatrix(x_valid, y_valid)
-            else:
-                valid_data = xgb.DMatrix(x_valid)
-        
         if args.task == "classification":
-            Xgb = Xgboost.Xgboost.XgbClassifier(train_data=train_data, params=param_dict)
+            xgb_model = Xgboost.Xgboost.XgbClassifier(params=param_dict)
             if args.mode == "train":
-                Xgb.train() 
+                xgb_model.train(x_train, y_train) 
+            elif args.mode == "predict":
+                pass
+            elif args.mode == "analysis":
+                pass
+
 
 if __name__ == "__main__":
     main()

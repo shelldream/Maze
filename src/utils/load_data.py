@@ -6,12 +6,17 @@
 """
 import sys
 reload(sys).setdefaultencoding('utf-8')
-import os
+sys.path.append("./utils")
+sys.path.append("../utils")
+sys.path.append("./metrics")
+sys.path.append("../metrics")
 
+import os
 import numpy as np
 import pandas as pd
 from sklearn.datasets import load_svmlight_file
 
+from common import *
 
 def load_libsvm_file(filename, isDense=False):
     """
@@ -97,8 +102,8 @@ def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t"):
                     continue
             except:
                 continue
-    print "feature name list: ", ft_name_list
-    print "feature type dict:", ft_name_type_dict
+    #print "feature name list: ", ft_name_list
+    #print "feature type dict:", ft_name_type_dict
 
     frames = []
     for filename in file_list:
@@ -108,21 +113,30 @@ def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t"):
         df = pd.read_csv(filename, sep=delimiter, header=None, names=ft_name_list, \
             dtype=ft_name_type_dict)
         frames.append(df)
+    if len(frames) == 0:
+        return None
     data = pd.concat(frames, axis=0)
     data = data.reset_index(drop=True)  #合并不同数据文件的数据，然后重置index
 
     return data
 
-def filter_feature(data, filter_feature_list=None):
+def filter_feature(data, black_feature_list=None):
     """
         Args:
-            filter_feature_list: list,
+            black_feature_list: list,
             data: pandas dataframe 格式
         Rets:
 
     """
-    pass
-
+    if black_feature_list is None:
+        return data
+    
+    for feature in black_feature_list:
+        try:
+            data.pop(feature)
+        except:
+            print colors.RED + "%s does not in the feature schema"%feature + colors.ENDC
+    return data
 
 if __name__ == "__main__":
     test_data = load_csv_with_table_header(["test.dat", "test.txt"]) 
