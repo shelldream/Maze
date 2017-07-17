@@ -48,10 +48,16 @@ def main():
 
 
     #parameter
+    parser.add_argument("--black_feature_list", action="append", dest="black_feature_list", default=None, help="Choose the \
+    black feature you don't need!")
+
     parser.add_argument("--parameters", default="{}", dest="parameters", help="Choose the parameters for your model and \
         the format of your parameters is dict format!")
     parser.add_argument("--boost_round", default=100, dest="boost_round", help="Number of boosting iterations")
-     
+    
+    #model path
+    parser.add_argument("--model_path", default="./model/default_model", dest="model_path", help="Set your model path for model saving or loading")
+    
     parse_args(parser)
 
 def split_data_label(data):
@@ -111,25 +117,25 @@ def parse_args(parser):
         raise ValueError("Wrong data type parameter!")
     
     try:
-        param_dict = eval(args.parameters)
-        print colors.YELLOW + "param_dict:", param_dict , colors.ENDC
-    except:
-        raise ValueError("Wrong parameters!!")
-
-    try:
         boost_round = int(args.boost_round)
     except:
         raise ValueError("Wrong boost round number!!")
     
+    try:
+        param_dict = eval(args.parameters)
+        print colors.YELLOW + "param_dict:", param_dict , colors.ENDC
+    except:
+        raise ValueError("Wrong parameters!!")
+    
     if args.model == "xgboost":
         if args.task == "classification":
-            xgb_model = Xgboost.Xgboost.XgbClassifier(params=param_dict)
+            xgb_model = Xgboost.Xgboost.XgbClassifier(params=param_dict, )
             if args.mode == "train":
-                xgb_model.train(x_train, y_train) 
+                xgb_model.train(x_train, y_train, model_saveto=args.model_path) 
             elif args.mode == "predict":
-                pass
+                xgb_model.predict()
             elif args.mode == "analysis":
-                pass
+                xgb_model.analysis(x_test, y_test, model_load_from=args.model_path)
 
 
 if __name__ == "__main__":
