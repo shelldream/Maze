@@ -43,7 +43,7 @@ def load_libsvm_file(filename, isDense=False):
     
     return y_data, x_data 
                 
-def load_csv_with_table_header(file_list, delimiter="\t"):
+def load_csv_with_table_header(file_list, fmap=None, delimiter="\t", black_feature_list=None):
     """
         载入带表头的的文本数据，schema为文件第一行
         Args:
@@ -66,10 +66,10 @@ def load_csv_with_table_header(file_list, delimiter="\t"):
         frames.append(df)
     data = pd.concat(frames, axis=0)
     data = data.reset_index(drop=True)  #合并不同数据文件的数据，然后重置index
-
+    data = filter_feature(data, black_feature_list)
     return data
 
-def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t"):
+def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t", black_feature_list=None):
     """
         载入文本数据,并且根据指定的feature map文件制定数据的schema
         
@@ -117,6 +117,7 @@ def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t"):
         return None
     data = pd.concat(frames, axis=0)
     data = data.reset_index(drop=True)  #合并不同数据文件的数据，然后重置index
+    data = filter_feature(data, black_feature_list)
 
     return data
 

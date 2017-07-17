@@ -49,7 +49,7 @@ def main():
 
     #parameter
     parser.add_argument("--black_feature_list", action="append", dest="black_feature_list", default=None, help="Choose the \
-    black feature you don't need!")
+        black feature you don't need!")
 
     parser.add_argument("--parameters", default="{}", dest="parameters", help="Choose the parameters for your model and \
         the format of your parameters is dict format!")
@@ -105,13 +105,13 @@ def parse_args(parser):
     elif args.data_type == "csv_with_schema" or args.data_type == "csv_with_table_header":# 读取的数据类型都是pandas类型
         load_func = ld.load_csv_with_fmap if args.data_type == "csv_with_schema" else ld.load_csv_with_table_header
         if args.train_data is not None:
-            train_data = load_func(args.train_data, args.fmap)
+            train_data = load_func(args.train_data, args.fmap, black_feature_list=args.black_feature_list)
             y_train, x_train = split_data_label(train_data)               
         if args.test_data is not None:
-            test_data = load_func(args.test_data, args.fmap)
+            test_data = load_func(args.test_data, args.fmap, black_feature_list=args.black_feature_list)
             y_test, x_test = split_data_label(test_data)               
         if args.validation_data is not None:
-            valid_data = load_func(args.validation_data, args.fmap)
+            valid_data = load_func(args.validation_data, args.fmap, black_feature_list=args.black_feature_list)
             y_valid, x_valid = split_data_label(valid_data)               
     else:
         raise ValueError("Wrong data type parameter!")
@@ -129,7 +129,7 @@ def parse_args(parser):
     
     if args.model == "xgboost":
         if args.task == "classification":
-            xgb_model = Xgboost.Xgboost.XgbClassifier(params=param_dict, )
+            xgb_model = Xgboost.Xgboost.XgbClassifier(params=param_dict)
             if args.mode == "train":
                 xgb_model.train(x_train, y_train, model_saveto=args.model_path) 
             elif args.mode == "predict":
