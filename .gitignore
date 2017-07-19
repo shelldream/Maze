@@ -93,3 +93,4 @@ test_*
 *.dat
 *.schema
 model/
+*.bak

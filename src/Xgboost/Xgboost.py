@@ -19,6 +19,7 @@ import numpy as np
 import pickle
 from common import *
 import metrics.classify_metrics as classify_metrics
+import metrics.regression_metrics as regression_metrics
 
 class Xgboost(object):
     def __init__(self, params={}, model_saveto=None):
@@ -36,12 +37,28 @@ class Xgboost(object):
         else:
             self.model_saveto = model_saveto
 
-class XgbRegressor()
+class XgbRegressor(Xgboost):
     def __init__(self, params={}, model_saveto=None):
         super(XgbRegressor, self).__init__()
-        self.bst_classifier = xgb.XGBRegressor()(**self.params)
+        self.bst_regressor = xgb.XGBRegressor(**self.params)
         self.model = None
+    def train(self, x_train, y_train, model_saveto=None):
+        self.model_saveto = model_saveto if model_saveto is not None else self.model_saveto
+        self.model = self.bst_regressor.fit(x_train, y_train) 
+        y_pred = self.model.predict(x_train)
+        mean_squared_error = regression_metrics.cal_mean_squared_error(y_train, y_pred)
+        print colors.BLUE + "In the training set, mean squared error: %f"%mean_squared_error + colors.ENDC
+    
+    def analysis(self, x_test, y_test, model_load_from=None):
+        model_load_from = model_load_from if model_load_from is not None else self.model_saveto
+        try:
+            model = pickle.load(open(model_load_from, "rb"))
+            print colors.GREEN + "%s has been loaded successfully!!"%model_load_from + colors.ENDC
+        except:
+            raise ValueError(colors.RED+"Model %s faied to be loaded!!"%model_load_from + colors.ENDC)
         
+        y_pred = model.predict(x_test)
+
 
 class XgbClassifier(Xgboost):
     def __init__(self, params={}, model_saveto=None):

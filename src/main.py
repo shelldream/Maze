@@ -130,13 +130,15 @@ def parse_args(parser):
     if args.model == "xgboost":
         if args.task == "classification":
             xgb_model = Xgboost.Xgboost.XgbClassifier(params=param_dict)
-            if args.mode == "train":
-                xgb_model.train(x_train, y_train, model_saveto=args.model_path) 
-            elif args.mode == "predict":
-                xgb_model.predict()
-            elif args.mode == "analysis":
-                xgb_model.analysis(x_test, y_test, model_load_from=args.model_path)
-
+        elif args.task == "regression":
+            xgb_model = Xgboost.Xgboost.XgbRegressor(params=param_dict)
+        
+        if args.mode == "train":
+            xgb_model.train(x_train, y_train, model_saveto=args.model_path) 
+        elif args.mode == "predict":
+            xgb_model.predict()
+        elif args.mode == "analysis":
+            xgb_model.analysis(x_test, y_test, model_load_from=args.model_path)
 
 if __name__ == "__main__":
     main()
