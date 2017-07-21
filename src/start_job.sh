@@ -16,5 +16,5 @@ python main.py \
     --task="classification" \
     --model_path="./model/default_model.pickle.dat" \
     --parameter="{'n_estimators':100, 'max_depth':3, 'eta': 0.5, 'silent': 0, 'booster':'gbtree', 'objective': 'binary:logistic','eval_metric':'error','rate_drop':0.5, 'skip_rate':0.8, 'gamma': 0.1, 'max_delta_step':0, 'subsample':1, 'colsample_bytree':1, 'alpha':0, 'lambda':1, 'scale_pos_weight':1}" \
-    --mode="analysis" 
-    #--mode="train" 
+    --mode="train" 
+    #--mode="analysis" 
