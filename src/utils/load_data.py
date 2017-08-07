@@ -12,6 +12,7 @@ sys.path.append("./metrics")
 sys.path.append("../metrics")
 
 import os
+import copy
 import numpy as np
 import pandas as pd
 from sklearn.datasets import load_svmlight_file
@@ -66,8 +67,9 @@ def load_csv_with_table_header(file_list, fmap=None, delimiter="\t", black_featu
         frames.append(df)
     data = pd.concat(frames, axis=0)
     data = data.reset_index(drop=True)  #合并不同数据文件的数据，然后重置index
-    data = filter_feature(data, black_feature_list)
-    return data
+    filtered_data = filter_feature(data, black_feature_list)
+
+    return filtered_data, data
 
 def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t", black_feature_list=None):
     """
@@ -77,7 +79,6 @@ def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t", b
             file_list: list, 数据文件列表,数据格式按照 "\t" 分隔
             fmap_filename: str, feature schema 文件名, 格式：index\tfeature_name\tdata_type
         Rets:
-            data: pandas dataframe 格式, 从多个数据文件中读取数据合并后的结果
     """
     if not os.path.isfile(fmap_filename):
         raise ValueError("schema file %s does not exist!"%fmap_filename)
@@ -117,9 +118,9 @@ def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t", b
         return None
     data = pd.concat(frames, axis=0)
     data = data.reset_index(drop=True)  #合并不同数据文件的数据，然后重置index
-    data = filter_feature(data, black_feature_list)
+    filtered_data = filter_feature(data, black_feature_list)
 
-    return data
+    return filtered_data, data
 
 def filter_feature(data, black_feature_list=None):
     """
@@ -131,13 +132,13 @@ def filter_feature(data, black_feature_list=None):
     """
     if black_feature_list is None:
         return data
-    
+    filtered_data = copy.deepcopy(data)
     for feature in black_feature_list:
         try:
-            data.pop(feature)
+            filtered_data.pop(feature)
         except:
             print colors.RED + "%s does not in the feature schema"%feature + colors.ENDC
-    return data
+    return filtered_data
 
 if __name__ == "__main__":
     test_data = load_csv_with_table_header(["test.dat", "test.txt"]) 

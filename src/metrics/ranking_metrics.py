@@ -31,7 +31,8 @@ def cal_ndcg(scores, preds, topn=-1):
     if len(scores) != len(preds):
         raise ValueError("The lengths of scores and preds are not the same!!")
     topn = len(scores) if topn == -1 else min(topn, len(scores))
-    
+    scores = scores[0:topn]
+     
     score_preds_pairs = [(scores[i], preds[i]) for i in range(len(scores))]
     sorted_pairs_by_score = sorted(score_preds_pairs, key=lambda x:x[0], reverse=True)  #按照原始的score降序排序
     sorted_pairs_by_preds = sorted(score_preds_pairs, key=lambda x:x[1], reverse=True)  #按照预测的score降序排序

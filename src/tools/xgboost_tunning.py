@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*-
 """
-    Description:
+    Description: 
+        xgboost tunning 工具
+        解析xgboost的原始text文件，调用tunning函数，调试模型
     Author: shelldream
     Date:
 """
