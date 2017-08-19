@@ -14,8 +14,38 @@ def cal_precision_at_K():
 def cal_mrr():
     pass
 
-def cal_err():
-    pass
+def cal_err(scores, preds, topn=-1):
+    """
+        Calculate ERR(Expected Reciprocal Rank)
+        Args:
+            scores: list, 样本实际score
+            preds: list, 模型预测score
+            topn: int, err的topn位置
+        Rets:
+    """
+    if len(scores) != len(preds):
+        raise ValueError("The lengths of scores and preds are not the same!!")
+    score_preds_pairs = [(scores[i], preds[i]) for i in range(len(scores))]
+    sorted_pairs_by_preds = sorted(score_preds_pairs, key=lambda x:x[1], reverse=True)  #按照预测的score降序排序
+
+    def _cal_gain(score, max_score):
+        score = int(score)
+        max_score = int(max_score)
+        return (2**score-1.0)/2**max_score
+    
+    err = 0.0
+    pos = 1.0
+    all_before_no_prob = 1
+    max_score = max(scores)
+    for (score, pred) in sorted_pairs_by_preds:
+        if pos > topn and topn != -1:
+            break
+        discount = 1.0/pos
+        current_gain = _cal_gain(score, max_score)
+        err += discount*all_before_no_prob*current_gain
+        all_before_no_prob *= (1.0-current_gain)
+        pos += 1.0
+    return err
 
 
 def cal_ndcg(scores, preds, topn=-1):
@@ -44,7 +74,6 @@ def cal_ndcg(scores, preds, topn=-1):
             discount = 1.0/np.log2(2+i) 
             #sum_dcg += (2**score-1.0)*discount
             sum_dcg += score*discount
-
         return sum_dcg
 
     IDCG = cal_dcg(sorted_pairs_by_score)
@@ -60,4 +89,8 @@ def cal_ndcg(scores, preds, topn=-1):
 if __name__ == "__main__":
     scores = [2, 1, 2, 0]
     preds = [4,3,2,1]
-    print cal_ndcg(scores, preds) 
+    print cal_ndcg(scores, preds)
+    
+    scores = [3,2,4]
+    preds = [3,2,1]
+    print cal_err(scores, preds) 

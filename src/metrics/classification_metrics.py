@@ -16,7 +16,15 @@ def cal_accuracy_score(labels, y_pred, normalize=True, sample_weight=None):
     return sk_metrics.accuracy_score(labels, y_pred, normalize, sample_weight)
 
 
+def cal_auc_pr(labels, preds, pos_label=1):
+    """Precision Recall curve auc"""
+    pass
+
+
 def cal_auc(labels, preds, pos_label=1):
+    """
+        ROC AUC
+    """
     fpr, tpr, thresholds = sk_metrics.roc_curve(labels, preds, pos_label=pos_label)
     auc = sk_metrics.auc(fpr, tpr)
     return auc

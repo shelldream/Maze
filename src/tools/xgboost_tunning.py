@@ -9,6 +9,7 @@
 import sys
 reload(sys).setdefaultencoding("utf-8")
 import re
+import numpy as np
 
 def parse_raw_text_model_file(filename):
     "解析xgboost 原始的text文件"
@@ -113,6 +114,7 @@ def tunning():
         try:
             feature_dict = eval(raw_data)
             xgboost_score = get_xgboost_score(all_nodes_info, total_tree_num, feature_dict)
+            xgboost_score = 1.0/(1+np.exp(-xgboost_score))
             print "score:%f"%xgboost_score
         except:
             try:
@@ -123,6 +125,7 @@ def tunning():
                     feature_dict[feature] = float(value)
                 print "Now the feature dict is ", feature_dict
                 xgboost_score = get_xgboost_score(all_nodes_info, total_tree_num, feature_dict)
+                xgboost_score = 1.0/(1+np.exp(-xgboost_score))
                 print "score:%f"%xgboost_score
             except:
                 print "Wrong feature dict format!!"
