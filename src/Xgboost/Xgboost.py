@@ -202,11 +202,11 @@ class XgbClassifier(Xgboost):
         self.save_model(model_saveto)
         self.save_text_model(model_saveto + ".raw_text")
 
-        accuracy_score = classification_metrics.cal_accuracy_score(y_train, y_pred) 
+        accuracy_score = classify_metrics.cal_accuracy_score(y_train, y_pred) 
         print colors.BLUE + "In the training set, classification accuracy score: %f"%accuracy_score + colors.ENDC
         if len(set(y_train)) == 2 and len(set(y_pred)) == 2: #binary classification
             predict_probs = np.array([prob[1] for prob in self.model.predict_proba(x_train)])
-            auc = classification_metrics.cal_auc(y_train, predict_probs)
+            auc = classify_metrics.cal_auc(y_train, predict_probs)
             print colors.BLUE + "In the training set, AUC: %f"%auc + colors.ENDC
         
         sorted_fscores , sorted_scores = self.cal_feature_importance(importance_type="gain")
@@ -214,8 +214,6 @@ class XgbClassifier(Xgboost):
     def predict(self, x_data, raw_x_data, predict_result_output, model_load_from=None):
         self.load_model(model_load_from)
         y_pred = self.model.predict(x_data)
-        if len(set(y_train)) == 2 and len(set(y_pred)) == 2: #binary classification
-            predict_probs = np.array([prob[1] for prob in self.model.predict_proba(x_train)])
         
         return y_pred
     
@@ -223,10 +221,10 @@ class XgbClassifier(Xgboost):
         self.load_model(model_load_from) 
         y_pred = self.model.predict(x_test) 
 
-        accuracy_score = classification_metrics.cal_accuracy_score(y_test, y_pred) 
+        accuracy_score = classify_metrics.cal_accuracy_score(y_test, y_pred) 
         print colors.BLUE + "In the test set, classification accuracy score: %f"%accuracy_score + colors.ENDC
         if len(set(y_test)) == 2 and len(set(y_pred)) == 2: #binary classification
             predict_probs = np.array([prob[1] for prob in model.predict_proba(x_test)])
-            auc = classification_metrics.cal_auc(y_test, predict_probs)
+            auc = classify_metrics.cal_auc(y_test, predict_probs)
             print colors.BLUE + "In the test set, AUC: %f"%auc + colors.ENDC
 

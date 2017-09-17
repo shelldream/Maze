@@ -50,6 +50,7 @@ def load_csv_with_table_header(file_list, fmap=None, delimiter="\t", black_featu
         Args:
             file_list: list, 数据文件名列表
         Rets:
+            filtered_data: pandas dataframe 格式，过滤掉部分特征后的结果
             data: pandas dataframe 格式, 从多个数据文件中读取数据合并后的结果
     """
     for filename in file_list:
