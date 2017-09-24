@@ -117,21 +117,3 @@ class FeatureChecker(object):
                     metrics = sum(metrics_list)/len(metrics_list)
             print metrics
     
-if __name__ == "__main__":
-    data_dir = "/export/sdb/shelldream/coupon_rank/"
-    #tmp_file_name = ["20170904.txt"]
-    tmp_file_name = ["20170901.txt", "20170902.txt"]
-    #tmp_file_name = ["20170902.txt", "20170903.txt", "20170904.txt", "20170905.txt", "20170901.txt"]
-    file_list = [data_dir+filename for filename in tmp_file_name]
-    black_feature_list = []
-
-    filtered_data, data = load_data.load_csv_with_fmap(file_list, "fmap.schema")
-     
-    checker = FeatureChecker(filtered_data);
-    with open("fmap.schema", "r") as fr:
-        for line in fr:
-            index, fname, ftype = line.strip().split("\t") 
-            if ftype == "float" or ftype == "int":
-                checker.check_distribution_precisely(fname, label_name="label")
-                checker.cal_correlation(fname, label_name="label", groupby="pvid", metrics_func=classification_metrics.cal_auc)
-                print "#"*50

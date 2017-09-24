@@ -101,7 +101,7 @@ class XgbRanker(Xgboost):
         self.params = params if params is not None else dict()
         self.model = xgb.XGBRegressor(**self.params)
 
-    def train(self, x_train, y_train, model_saveto=None):
+    def train(self, x_train, y_train, raw_train_data, model_saveto=None, groupby=None, target=None):
         model_saveto = model_saveto if model_saveto is not None else self.model_saveto
         self.model.fit(x_train, y_train) 
         y_pred = self.model.predict(x_train)
@@ -157,7 +157,7 @@ class XgbRegressor(Xgboost):
         self.params = params if params is not None else dict()
         self.model = xgb.XGBRegressor(**self.params)
          
-    def train(self, x_train, y_train, model_saveto=None):
+    def train(self, x_train, y_train, raw_train_data, model_saveto=None, groupby=None, target=None):
         self.model = self.model.fit(x_train, y_train) 
         y_pred = self.model.predict(x_train)
         mean_squared_error = regression_metrics.cal_mean_squared_error(y_train, y_pred)
@@ -191,7 +191,7 @@ class XgbClassifier(Xgboost):
         self.params = params if params is not None else dict()
         self.model = xgb.XGBClassifier(**self.params)
     
-    def train(self, x_train, y_train, model_saveto=None, importance_type="weight"):
+    def train(self, x_train, y_train, raw_train_data, model_saveto=None, importance_type="weight", groupby=None, target=None):
         """
             Args:
                 x_train:
@@ -206,25 +206,62 @@ class XgbClassifier(Xgboost):
         print colors.BLUE + "In the training set, classification accuracy score: %f"%accuracy_score + colors.ENDC
         if len(set(y_train)) == 2 and len(set(y_pred)) == 2: #binary classification
             predict_probs = np.array([prob[1] for prob in self.model.predict_proba(x_train)])
-            auc = classify_metrics.cal_auc(y_train, predict_probs)
-            print colors.BLUE + "In the training set, AUC: %f"%auc + colors.ENDC
-        
+            if groupby is None:
+                auc = classify_metrics.cal_auc(y_train, predict_probs)
+                print colors.BLUE + "In the training set, AUC: %f"%auc + colors.ENDC
+            else:
+                new_data_dict = {"predict_prob": predict_probs, groupby: raw_train_data[groupby], target: raw_train_data[target]}
+                new_df = pd.DataFrame(new_data_dict) 
+                auc_list = []
+                
+                grouped = new_df.groupby(groupby)
+                for key, data in grouped:
+                    tmp_y_test = data[target].tolist()
+                    tmp_y_pred = data["predict_prob"].tolist()
+                    if len(set(tmp_y_test)) != 2:
+                        continue
+                    auc = classify_metrics.cal_auc(tmp_y_test, tmp_y_pred) 
+                    auc_list.append(auc)
+                print colors.BLUE + "In the training set, groupby %s average AUC: %f"%(groupby, sum(auc_list)/len(auc_list)) + colors.ENDC
         sorted_fscores , sorted_scores = self.cal_feature_importance(importance_type="gain")
             
     def predict(self, x_data, raw_x_data, predict_result_output, model_load_from=None):
         self.load_model(model_load_from)
-        y_pred = self.model.predict(x_data)
-        
-        return y_pred
-    
+        y_pred = [prob[1] for prob in self.model.predict_proba(x_data)]
+        raw_x_data.insert(0, "predict_prob", y_pred)
+        try:
+            raw_x_data.to_csv(predict_result_output, sep="\t", index=False)
+            print colors.BLUE + "The classification predict result has been saved as %s"%predict_result_output + colors.ENDC
+        except:
+            raise ValueError(colors.RED + "Fail to predict the classification prob!! Please check your data and your output path!" + colors.ENDC)
+        return raw_x_data
+
     def analysis(self,x_test, raw_test_data, model_load_from=None, groupby=None, target="label"):
         self.load_model(model_load_from) 
+        y_test = raw_test_data[target]
         y_pred = self.model.predict(x_test) 
 
         accuracy_score = classify_metrics.cal_accuracy_score(y_test, y_pred) 
         print colors.BLUE + "In the test set, classification accuracy score: %f"%accuracy_score + colors.ENDC
+        
+        
         if len(set(y_test)) == 2 and len(set(y_pred)) == 2: #binary classification
-            predict_probs = np.array([prob[1] for prob in model.predict_proba(x_test)])
-            auc = classify_metrics.cal_auc(y_test, predict_probs)
-            print colors.BLUE + "In the test set, AUC: %f"%auc + colors.ENDC
-
+            predict_probs = np.array([prob[1] for prob in self.model.predict_proba(x_test)])
+            if groupby is None:
+                auc = classify_metrics.cal_auc(y_test, predict_probs)
+                print colors.BLUE + "In the test set, AUC: %f"%auc + colors.ENDC
+            else:
+                group_columns = raw_test_data[groupby]
+                new_data_dict = {"predict_prob": predict_probs, groupby: group_columns, target: y_test}
+                new_df = pd.DataFrame(new_data_dict) 
+                auc_list = []
+                
+                grouped = new_df.groupby(groupby)
+                for key, data in grouped:
+                    tmp_y_test = data[target].tolist()
+                    tmp_y_pred = data["predict_prob"].tolist()
+                    if len(set(tmp_y_test)) != 2:
+                        continue
+                    auc = classify_metrics.cal_auc(tmp_y_test, tmp_y_pred) 
+                    auc_list.append(auc)
+                print colors.BLUE + "In the test set, groupby %s average AUC: %f"%(groupby, sum(auc_list)/len(auc_list)) + colors.ENDC
