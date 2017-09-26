@@ -11,49 +11,10 @@ reload(sys).setdefaultencoding("utf-8")
 import re
 import numpy as np
 
-def parse_raw_text_model_file(filename):
-    "解析xgboost 原始的text文件"
-    all_nodes_info = dict()
+sys.path.append("./")
+sys.path.append("../")
 
-    tree_id = None
-    total_tree_num = 0
-
-    with open(filename, "r") as fr:
-        for line in fr:
-            line = line.rstrip()
-            root_match_res = re.match(re.compile(r"booster\[\d+\]"), line) #find the root node of a single tree
-            if root_match_res is not None:
-                tree_id = root_match_res.group().lstrip("booster[").rstrip("]")
-                total_tree_num += 1
-                 
-            tree_node_match_res = re.search(re.compile(r"\d+:"), line)
-            if tree_node_match_res is not None:
-                node_id = tree_id + "_" + tree_node_match_res.group().rstrip(":")
-                all_nodes_info[node_id] = dict()
-            
-                yes_match_res = re.search(re.compile("yes=\d+"), line)
-                no_match_res = re.search(re.compile(r"no=\d+"), line)
-                missing_match_res = re.search(re.compile(r"missing=\d+"), line)
-                
-                if yes_match_res is not None and no_match_res is not None and missing_match_res is not None:
-                    condition_match_res = re.search(re.compile(r"\[.*\]"), line)
-                    condition = condition_match_res.group().lstrip("[").rstrip("]")
-                    yes_node_id = tree_id + "_" + re.search(re.compile(r"yes=\d+"), line).group().lstrip("yes=")
-                    no_node_id = tree_id + "_" + re.search(re.compile(r"no=\d+"), line).group().lstrip("no=")
-                    missing_node_id = tree_id + "_" + re.search(re.compile(r"missing=\d+"), line).group().lstrip("missing=")
-            
-                    all_nodes_info[node_id]["condition"] = condition
-                    all_nodes_info[node_id]["yes"] = yes_node_id
-                    all_nodes_info[node_id]["no"] = no_node_id
-                    all_nodes_info[node_id]["missing"] = missing_node_id
-
-                leaf_match_res = re.search(re.compile("leaf=.*"), line)
-                
-                if leaf_match_res is not None:
-                    leaf_value = float(leaf_match_res.group().lstrip("leaf=") )
-                    all_nodes_info[node_id]["leaf"] = leaf_value
-    return all_nodes_info, total_tree_num
-
+import utils.xgboost_utils
 
 def get_xgboost_score(all_nodes_info, total_tree_num, feature_dict):
     score = 0.0
@@ -107,7 +68,7 @@ def tunning():
             score:2.450927
     """
     filename = sys.argv[1]
-    all_nodes_info, total_tree_num = parse_raw_text_model_file(filename)
+    all_nodes_info, total_tree_num = utils.xgboost_utils.parse_raw_text_model_file(filename)
     feature_dict = dict()
     while True:
         raw_data = raw_input("please input feature dict or modify your feature:")

@@ -1,15 +1,11 @@
 #-*- coding:utf-8 -*-
 """
-    Description:  加载数据相关的函数
+    Description:  数据加载相关的函数
     Author:  shelldream
     Date: 2017.07.11
 """
 import sys
 reload(sys).setdefaultencoding('utf-8')
-sys.path.append("./utils")
-sys.path.append("../utils")
-sys.path.append("./metrics")
-sys.path.append("../metrics")
 
 import os
 import copy
@@ -17,7 +13,7 @@ import numpy as np
 import pandas as pd
 from sklearn.datasets import load_svmlight_file
 
-from common import *
+import common
 
 def load_libsvm_file(filename, isDense=False):
     """
@@ -114,6 +110,7 @@ def load_csv_with_fmap(file_list, fmap_filename="fmap.schema", delimiter="\t", b
             continue
         df = pd.read_csv(filename, sep=delimiter, header=None, names=ft_name_list, \
             dtype=ft_name_type_dict)
+        print common.colors.GREEN + "Load datafile %s successfully!!"%filename + common.colors.ENDC 
         frames.append(df)
     if len(frames) == 0:
         return None

@@ -32,7 +32,7 @@ class XgboostUtil(object):
             raise ValueError(colors.RED+"Model %s faied to be loaded!!"%fname + colors.ENDC)
         self.fscores = self.model.booster().get_fscore()
         self.feature_set = set(self.fscores.keys())
-        self.feature_set = self.feature_set | self.given_features
+        self.feature_set = self.feature_set | set(self.given_features)
         self.tmp_file = "tmp_model.txt"
     
     def conv2py(self, output_py_model="model.py", predict_function_name="gbdt_predict"):
@@ -246,6 +246,6 @@ def parse_raw_text_model_file(filename):
 
 if __name__ == "__main__":
     bin_model_file = "../model/coupon_model.txt"
-    xgb_util = XgboostUtil(bin_model_file)
+    xgb_util = XgboostUtil(bin_model_file, given_features=["user_sku_follow_cnt"])
     #xgb_util.conv2py()
-    #xgb_util.conv2cpp(predict_function_name='gbdt_predict_0915')
+    xgb_util.conv2cpp(predict_function_name='gbdt_predict_coupon')
