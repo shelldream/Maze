@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FeatureExtractor version="1.0">
+
+<quantizations>
+<quantization id="price" type="bin" >
+    <bin upper="2.0"> </bin>
+    <bin upper="3.0"> </bin>
+    <bin upper="4.0"> </bin>
+</quantization>
+
+<quantization id="clicks" type="bin_scale" >
+    <bin upper="10.0" scale_upper="12.0"> </bin>
+    <bin upper="20.0" scale_upper="18.0"> </bin>
+</quantization>
+</quantizations>
+
+<features>
+<feature index="0">
+    <node id="text_weight" type="numeric"></node>
+</feature>
+
+<feature index="1">
+    <node id="hc_cid3" type="enum" eq="1315"></node>
+</feature>
+
+<feature index="2">
+    <node id="price" type="bin" bin="1"></node>
+</feature>
+
+<feature index="3">
+    <node id="clicks" type="bin_scale"></node>
+</feature>
+
+<feature index="4">
+    <node id="isHit" type="enum" eq="1"></node>
+    <node id="clicks" type="enum" gt="100"></node>
+</feature>
+</features>
+
+</FeatureExtractor>
